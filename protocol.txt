@@ -1,0 +1,5 @@
+message {
+    command : string
+    userId : string
+    parameters : dict
+}
