@@ -12,6 +12,7 @@ void* NUtils::GetInAddr(sockaddr* sa) {
 }
 
 void NUtils::SaveFile(int fd, const std::string& newFileName, int maxDataSize) {
+    printf("Saving file: %s\n", newFileName.c_str());
     FILE* fptr = fopen(newFileName.c_str(), "w");
 
     if (!fptr) {
@@ -22,17 +23,18 @@ void NUtils::SaveFile(int fd, const std::string& newFileName, int maxDataSize) {
     int numbytes = 0;
     int sum = 0;
     std::vector<char> buf(maxDataSize);
-    while ((numbytes = recv(fd, &buf[0], buf.size(), 0)) > 0) {
+    while ((numbytes = recv(fd, &buf[0], maxDataSize, 0)) > 0) {
         sum += numbytes;
-        printf("received: '%d bytes\n", numbytes);
-        assert(fwrite(&buf[0], sizeof(char), numbytes, fptr) == numbytes);
+        printf("received: %d bytes\n", numbytes);
+        printf("Wrote bytes: %zu\n", fwrite(&buf[0], sizeof(char), numbytes, fptr));
     }
     printf("Total bytes received: '%d'\n", sum);
 
     fclose(fptr);
 }
 
-void NUtils::SendFile(const std::string& filename, int connectorFd, int maxDataSize) {
+void NUtils::SendFile(int connectorFd, const std::string& filename, int maxDataSize) {
+    printf("Sending file: %s\n", filename.c_str());
     FILE* fptr = fopen(filename.c_str(), "r");
     std::vector<char> buf(maxDataSize);
     if (!fptr) {
@@ -46,9 +48,11 @@ void NUtils::SendFile(const std::string& filename, int connectorFd, int maxDataS
     while (!feof(fptr)) {
         numbytes = fread(&buf[0], 1, buf.size(), fptr); 
         sum += numbytes;
-        printf("read data: %d\n", numbytes);
-        if (send(connectorFd, &buf[0], numbytes, 0) == -1)
+        printf("Sending bytes: %d\n", numbytes);
+        if (send(connectorFd, &buf[0], numbytes, 0) == -1) {
             perror("send");
+            exit(1);
+        }
     }
     printf("Total read data: %d\n", sum);
     fclose(fptr);

@@ -80,3 +80,15 @@ std::vector<std::string> TClient::ListFiles() {
     assert(NUtils::TFtpMessage::RecvMsg(SockFd, MaxDataSize, &resp));
     return NUtils::TFtpMessage::ParseList(resp.GetParam("listFiles"));
 }
+
+void TClient::UploadFile(const std::string& fileName) {
+    std::unordered_map<std::string, std::string> params = {
+        {"filename", fileName},
+        {"userId", UserId},
+        {"command", "2"}
+    };
+    assert(NUtils::TFtpMessage(params).Send(SockFd));
+    NUtils::TFtpMessage msg;
+    assert(NUtils::TFtpMessage::RecvMsg(SockFd, MaxDataSize, &msg));
+    NUtils::SendFile(SockFd, fileName, MaxDataSize);
+}

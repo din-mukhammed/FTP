@@ -103,7 +103,7 @@ void NFtp::TServer::ServeRequest(int conFd) {
     }
     buf[numbytes] = '\0';
     auto clientMsg = NUtils::TFtpMessage::ToMsg(buf);
-    printf("Received Message: \n\t%s\n", clientMsg.ToStr().c_str());
+    printf("Received Message: size = %zu\n", clientMsg.ToStr().size());
 
     int commandCode = std::stoi(clientMsg.GetParam("command"));
     switch (commandCode) {
@@ -111,7 +111,10 @@ void NFtp::TServer::ServeRequest(int conFd) {
         SendFile(clientMsg, conFd);
         break;
     case NUtils::ECommand::List:
-        ListFiles(clientMsg.GetParam("userId"), conFd);
+        ListFiles(clientMsg, conFd);
+        break;
+    case NUtils::ECommand::Upload:
+        SaveFile(clientMsg, conFd);
         break;
     default:
         printf("Invalid command: %d", commandCode);
@@ -122,11 +125,14 @@ void NFtp::TServer::SendFile(const NUtils::TFtpMessage& clientMsg, int conFd) {
     auto userFiles = GetUserFiles("../" + clientMsg.GetParam("userId"));
     auto it = find(userFiles.begin(), userFiles.end(), clientMsg.GetParam("filename"));
     assert(it != userFiles.end());
-    NUtils::SendFile(DefaultPath + clientMsg.GetParam("userId") + "/" + clientMsg.GetParam("filename"), conFd, MaxDataSize);
+    NUtils::SendFile(
+        conFd, 
+        DefaultPath + clientMsg.GetParam("userId") + "/" + clientMsg.GetParam("filename"), 
+        MaxDataSize);
 }
 
-void NFtp::TServer::ListFiles(const std::string& userId, int conFd) {
-    auto userFiles = GetUserFiles("../" + userId);
+void NFtp::TServer::ListFiles(const NUtils::TFtpMessage& clientMsg, int conFd) {
+    auto userFiles = GetUserFiles("../" + clientMsg.GetParam("userId"));
     std::string listFiles;
     for (size_t i = 0; i < userFiles.size(); ++i) {
         listFiles += (i > 0 ? "," : "") + userFiles[i];
@@ -152,4 +158,14 @@ std::vector<std::string> NFtp::TServer::GetUserFiles(const std::string& userId) 
     }
     closedir(curDir);
     return files;
+}
+
+void NFtp::TServer::SaveFile(const NUtils::TFtpMessage& clientMsg, int conFd) {
+    std::unordered_map<std::string, std::string> params = {
+        {"status", "OK"}
+    };
+    assert(NUtils::TFtpMessage(params).Send(conFd));
+    auto path = DefaultPath + clientMsg.GetParam("userId") + "/" + clientMsg.GetParam("filename");
+    NUtils::SaveFile(conFd, path, MaxDataSize);
+    assert(NUtils::TFtpMessage(params).Send(conFd));
 }

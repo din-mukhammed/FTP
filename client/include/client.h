@@ -20,7 +20,7 @@ public:
     ~TClient();
     
     void DownloadFile(const std::string& newFileName);
-
+    void UploadFile(const std::string& fileName);
     std::vector<std::string> ListFiles();
 private:
     int Init();
