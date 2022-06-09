@@ -8,42 +8,19 @@ namespace NUtils {
 const char ParamDelim = '=';
 const char ArgDelim = '#';
 
-class TMessage {
-public:
-    TMessage() = default;
-    
-    TMessage(const std::string& userId);
-
-    virtual std::string ToStr() const;
-
-    static TMessage ToMsg(const std::string& msgStr);
-protected:
-    static std::pair<std::string, std::string> ParsePair(const std::string& str);
-
-    const std::string UserId;
-
-    static bool ValidateArgumentsNum(const std::string& msgStr, int expectedArgsNum);
+enum ECommand {
+    List = 0,
+    Download = 1,
+    Upload = 2,
+    Login = 3
 };
-
-
-class TFtpMessage : public TMessage {
-public:
-    TFtpMessage() = default;
-
-    TFtpMessage(
-        const std::string& userId,
-        const std::string& command,
-        std::unordered_map<std::string, std::string>&& params);
-
-    std::string ToStr() const override;
-
-    static TFtpMessage ToMsg(const std::string& msgStr);
-private:
-    const std::string Command;
-    std::unordered_map<std::string, std::string> Params;
-};
-
 
 void* GetInAddr(sockaddr* sa);
+
+std::pair<std::string, std::string> ParsePair(const std::string& str);
+
+void SaveFile(int fd, const std::string& newFileName, int maxDataSize);
+
+void SendFile(const std::string& filename, int connectorFd, int maxDataSize);
 
 } // NUtils

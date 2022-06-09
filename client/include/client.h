@@ -17,12 +17,11 @@ class TClient {
 public:
     TClient(const std::string& hostname);
     ~TClient();
-    void SendRequest(const std::string& params) const;
+    void DownloadFile(const std::string& newFileName);
 private:
     int Init(const std::string& hostname);
-    void DownloadFile(const std::string& newFileName);
 
     const char* PORT = "3490";
-    const int MaxDataSize = 100;
+    const int MaxDataSize = 1024;
     int SockFd = 0;
 };

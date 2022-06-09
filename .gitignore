@@ -1,0 +1,6 @@
+server/build/
+client/build/
+.vscode/
+server/1.cpp
+server/generate_file.py
+server/file.txt

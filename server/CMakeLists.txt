@@ -5,6 +5,8 @@ add_library(
     server_lib
     "${CMAKE_CURRENT_SOURCE_DIR}/../utils/utils.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/../utils/utils.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../utils/ftp_message.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../utils/ftp_message.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/include/server.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/server.cpp"
 )

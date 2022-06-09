@@ -14,6 +14,8 @@
 #include <sys/wait.h>
 #include <signal.h>
 
+#include "../../utils/ftp_message.h"
+
 /*
 
     Server:
@@ -30,14 +32,16 @@ private:
     int InitAndRun();
 
     void ServeForever();
-    void SendFile(const std::string& filename, int connectorFd);
+    void SendFile(const NUtils::TFtpMessage& params, int connectorFd);
     void ServeRequest(int connectorFd);
 
     const char* PORT = "3490";
     const int BACKLOG = 20;
 
     int SockFd = 0;
-    const int MaxDataSize = 100;
+    const int MaxDataSize = 1024;
+
+    const std::string DefaultPath = "/home/dinkambarov/proj/ftp/server/";
 };
 
 } // NFtp

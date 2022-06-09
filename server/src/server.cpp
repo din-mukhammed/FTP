@@ -1,11 +1,9 @@
 #include "../include/server.h"
-#include "../../utils/utils.h"
 
 
 NFtp::TServer::TServer() {
-
     if (!InitAndRun()) {
-        throw std::runtime_error("Couldn't init server");
+        printf("Couldn't init server!\n");
     }
 }
 
@@ -84,42 +82,35 @@ void NFtp::TServer::ServeForever() {
             s, sizeof s);
         printf("server: got connection from %s\n", s);
 
-        if (!fork()) { // this is the child process
-            close(SockFd); // child doesn't need the listener
+        if (!fork()) { 
+            close(SockFd); 
             ServeRequest(connectorFd);
             close(connectorFd);
             exit(0);
         }
-        close(connectorFd);  // parent doesn't need this
+        close(connectorFd); 
     }
-}
-
-void NFtp::TServer::SendFile(const std::string& filename, int connectorFd) {
-    FILE* fptr = fopen(filename.c_str(), "r");
-    char buf[MaxDataSize];
-    if (!fptr) {
-        printf("Something went wrong with read()! %s\n", strerror(errno));
-        exit(1);
-    }
-
-    while (!feof(fptr)) {
-        int bytesRead = fread(buf, 1, sizeof(buf), fptr); 
-        printf("read data: %d\n", bytesRead);
-        if (send(connectorFd, buf, bytesRead, 0) == -1)
-            perror("send");
-    }
-
-    fclose(fptr);
 }
 
 void NFtp::TServer::ServeRequest(int conFd) {
     NUtils::TFtpMessage msg;
-    std::vector<char> buf(MaxDataSize);
+    char buf[MaxDataSize];
+    int numbytes = 0;
 
-    if (recv(conFd, &buf[0], buf.size(), 0) < 0) {
+    if (numbytes = recv(conFd, &buf[0], sizeof(buf), 0); numbytes < 0) {
         perror("Couldn't recv TFtpMsg");
         return;
     }
-    printf("Received: %s\n", buf.data());
-    SendFile("/home/dinkambarov/proj/ftp/server/file.txt", conFd);
+    buf[numbytes] = '\0';
+    auto clientMsg = NUtils::TFtpMessage::ToMsg(buf);
+    printf("Received: %s\n", clientMsg.ToStr().c_str());
+
+    int commandCode = std::stoi(clientMsg.GetParam("command"));
+    switch (commandCode) {
+    case NUtils::ECommand::Download:
+        NUtils::SendFile(DefaultPath + clientMsg.GetParam("filename"), conFd, MaxDataSize);
+        break;
+    default:
+        printf("Invalid command: %d", commandCode);
+    }
 }
