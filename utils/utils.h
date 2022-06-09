@@ -5,9 +5,6 @@
 
 namespace NUtils {
 
-const char ParamDelim = '=';
-const char ArgDelim = '#';
-
 enum ECommand {
     List = 0,
     Download = 1,
@@ -16,8 +13,6 @@ enum ECommand {
 };
 
 void* GetInAddr(sockaddr* sa);
-
-std::pair<std::string, std::string> ParsePair(const std::string& str);
 
 void SaveFile(int fd, const std::string& newFileName, int maxDataSize);
 

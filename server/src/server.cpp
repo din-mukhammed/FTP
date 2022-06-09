@@ -1,4 +1,5 @@
 #include "../include/server.h"
+#include <dirent.h>
 
 
 NFtp::TServer::TServer() {
@@ -93,7 +94,6 @@ void NFtp::TServer::ServeForever() {
 }
 
 void NFtp::TServer::ServeRequest(int conFd) {
-    NUtils::TFtpMessage msg;
     char buf[MaxDataSize];
     int numbytes = 0;
 
@@ -103,14 +103,53 @@ void NFtp::TServer::ServeRequest(int conFd) {
     }
     buf[numbytes] = '\0';
     auto clientMsg = NUtils::TFtpMessage::ToMsg(buf);
-    printf("Received: %s\n", clientMsg.ToStr().c_str());
+    printf("Received Message: \n\t%s\n", clientMsg.ToStr().c_str());
 
     int commandCode = std::stoi(clientMsg.GetParam("command"));
     switch (commandCode) {
     case NUtils::ECommand::Download:
-        NUtils::SendFile(DefaultPath + clientMsg.GetParam("filename"), conFd, MaxDataSize);
+        SendFile(clientMsg, conFd);
+        break;
+    case NUtils::ECommand::List:
+        ListFiles(clientMsg.GetParam("userId"), conFd);
         break;
     default:
         printf("Invalid command: %d", commandCode);
     }
+}
+
+void NFtp::TServer::SendFile(const NUtils::TFtpMessage& clientMsg, int conFd) {
+    auto userFiles = GetUserFiles("../" + clientMsg.GetParam("userId"));
+    auto it = find(userFiles.begin(), userFiles.end(), clientMsg.GetParam("filename"));
+    assert(it != userFiles.end());
+    NUtils::SendFile(DefaultPath + clientMsg.GetParam("userId") + "/" + clientMsg.GetParam("filename"), conFd, MaxDataSize);
+}
+
+void NFtp::TServer::ListFiles(const std::string& userId, int conFd) {
+    auto userFiles = GetUserFiles("../" + userId);
+    std::string listFiles;
+    for (size_t i = 0; i < userFiles.size(); ++i) {
+        listFiles += (i > 0 ? "," : "") + userFiles[i];
+    }
+    std::unordered_map<std::string, std::string> resp = {
+        {"listFiles", listFiles}
+    };
+    assert(NUtils::TFtpMessage(resp).Send(conFd));
+}
+
+std::vector<std::string> NFtp::TServer::GetUserFiles(const std::string& userId) {
+    std::vector<std::string> files;
+    DIR* curDir = opendir(userId.c_str());
+    if (!curDir) {
+        perror(userId.c_str());
+        exit(1);
+    }
+    while (auto dir = readdir(curDir)) {
+        if (strcmp(dir->d_name, ".") && strcmp(dir->d_name, "..")) {
+            printf(">> %s: %s\n", userId.c_str(), dir->d_name);
+            files.push_back(dir->d_name);
+        }
+    }
+    closedir(curDir);
+    return files;
 }

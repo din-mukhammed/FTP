@@ -2,8 +2,10 @@
 #include "../../utils/ftp_message.h"
 
 
-TClient::TClient(const std::string& hostname) {
-    if (int code = Init(hostname); code) {
+TClient::TClient(const std::string& userId)
+: UserId(userId)
+{
+    if (int code = Init(); code) {
         printf("Couldn't init client: %d", code);
     }
 }
@@ -12,7 +14,7 @@ TClient::~TClient() {
     close(SockFd);
 }
 
-int TClient::Init(const std::string& hostname) {
+int TClient::Init() {
     int numbytes;  
     struct addrinfo hints, *servinfo, *p;
     int rv;
@@ -22,7 +24,7 @@ int TClient::Init(const std::string& hostname) {
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
-    if ((rv = getaddrinfo(hostname.c_str(), PORT, &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo("din", PORT, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return 1;
     }
@@ -64,13 +66,17 @@ void TClient::DownloadFile(const std::string& newFileName) {
         {"userId", "Din"},
         {"command", "1"}
     };
-    NUtils::TFtpMessage msg(params);
-    auto msgStr = msg.ToStr();
-    printf("Sending TFtpMessage: size = %d, content: %s\n", msgStr.size(), msgStr.c_str());
-    if (send(SockFd, msgStr.c_str(), msgStr.size(), 0) < 0) {
-        perror("send TFtpMessage");
-        return;
-    }
-
+    assert(NUtils::TFtpMessage(params).Send(SockFd));
     NUtils::SaveFile(SockFd, newFileName, MaxDataSize);
+}
+
+std::vector<std::string> TClient::ListFiles() {
+    std::unordered_map<std::string, std::string> params = {
+        {"userId", UserId},
+        {"command", "0"}
+    };
+    assert(NUtils::TFtpMessage(params).Send(SockFd));
+    NUtils::TFtpMessage resp;
+    assert(NUtils::TFtpMessage::RecvMsg(SockFd, MaxDataSize, &resp));
+    return NUtils::TFtpMessage::ParseList(resp.GetParam("listFiles"));
 }

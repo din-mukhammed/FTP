@@ -16,13 +16,6 @@
 
 #include "../../utils/ftp_message.h"
 
-/*
-
-    Server:
-        Init()
-        AcceptRequest()
-        SendFile(filename)
-*/
 namespace NFtp {
 
 class TServer {
@@ -32,8 +25,10 @@ private:
     int InitAndRun();
 
     void ServeForever();
-    void SendFile(const NUtils::TFtpMessage& params, int connectorFd);
+    void SendFile(const NUtils::TFtpMessage& clientMsg, int connectorFd);
     void ServeRequest(int connectorFd);
+    std::vector<std::string> GetUserFiles(const std::string& userId);
+    void ListFiles(const std::string& userId, int connectorFd);
 
     const char* PORT = "3490";
     const int BACKLOG = 20;

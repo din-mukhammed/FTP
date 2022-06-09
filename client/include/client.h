@@ -15,12 +15,17 @@
 
 class TClient {
 public:
-    TClient(const std::string& hostname);
-    ~TClient();
-    void DownloadFile(const std::string& newFileName);
-private:
-    int Init(const std::string& hostname);
+    TClient(const std::string& userId);
 
+    ~TClient();
+    
+    void DownloadFile(const std::string& newFileName);
+
+    std::vector<std::string> ListFiles();
+private:
+    int Init();
+
+    const std::string UserId;
     const char* PORT = "3490";
     const int MaxDataSize = 1024;
     int SockFd = 0;

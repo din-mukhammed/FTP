@@ -11,14 +11,6 @@ void* NUtils::GetInAddr(sockaddr* sa) {
     return &(((sockaddr_in6*)sa)->sin6_addr);
 }
 
-std::pair<std::string, std::string> NUtils::ParsePair(const std::string& str) {
-    std::pair<std::string, std::string> ans;
-    int delimPos = str.find(ParamDelim);
-    ans.first = str.substr(0, delimPos);
-    ans.second = str.substr(delimPos + 1);
-    return ans;
-}
-
 void NUtils::SaveFile(int fd, const std::string& newFileName, int maxDataSize) {
     FILE* fptr = fopen(newFileName.c_str(), "w");
 

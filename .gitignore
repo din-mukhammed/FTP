@@ -4,3 +4,4 @@ client/build/
 server/1.cpp
 server/generate_file.py
 server/file.txt
+server/Din/
